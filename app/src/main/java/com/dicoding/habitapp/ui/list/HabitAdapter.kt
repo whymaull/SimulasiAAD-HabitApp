@@ -17,7 +17,12 @@ class HabitAdapter(
 
     //TODO 8 : Create and initialize ViewHolder
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HabitViewHolder {
-        return HabitViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.habit_item,parent,false))
+        val itemView = LayoutInflater.from(parent.context).inflate(
+            R.layout.habit_item,
+            parent,
+            false
+        )
+        return HabitViewHolder(itemView)
     }
 
     override fun onBindViewHolder(holder: HabitViewHolder, position: Int) {
@@ -29,7 +34,7 @@ class HabitAdapter(
     inner class HabitViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         private val tvTitle: TextView = itemView.findViewById(R.id.item_tv_title)
-        val ivPriority: ImageView = itemView.findViewById(R.id.item_priority_level)
+        private val ivPriority: ImageView = itemView.findViewById(R.id.item_priority_level)
         private val tvStartTime: TextView = itemView.findViewById(R.id.item_tv_start_time)
         private val tvMinutes: TextView = itemView.findViewById(R.id.item_tv_minutes)
 
@@ -39,15 +44,14 @@ class HabitAdapter(
             tvTitle.text = habit.title
             tvStartTime.text = habit.startTime
             tvMinutes.text = habit.minutesFocus.toString()
+            itemView.setOnClickListener {
+                onClick(habit)
+            }
 
             when(habit.priorityLevel){
                 "High" -> ivPriority.setImageResource(R.drawable.ic_priority_high)
                 "Medium" -> ivPriority.setImageResource(R.drawable.ic_priority_medium)
                 "Low" -> ivPriority.setImageResource(R.drawable.ic_priority_low)
-            }
-
-            itemView.setOnClickListener {
-                onClick(habit)
             }
         }
 

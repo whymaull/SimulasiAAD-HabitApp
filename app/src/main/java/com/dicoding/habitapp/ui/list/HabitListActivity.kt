@@ -1,6 +1,5 @@
 package com.dicoding.habitapp.ui.list
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
@@ -29,17 +28,9 @@ class HabitListActivity : AppCompatActivity() {
 
     private lateinit var recycler: RecyclerView
     private lateinit var viewModel: HabitListViewModel
-    private val adapterHabit : HabitAdapter by lazy {
-        HabitAdapter(::onClick)
-    }
+    private lateinit var habitAdapter: HabitAdapter
 
-    private fun onClick(habit: Habit) {
-        val intent = Intent(this, DetailHabitActivity::class.java)
-        intent.putExtra(HABIT_ID,habit.id)
-        startActivity(intent)
-    }
 
-    @SuppressLint("NotifyDataSetChanged")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_habit_list)
@@ -52,18 +43,23 @@ class HabitListActivity : AppCompatActivity() {
 
         //TODO 6 : Initiate RecyclerView with LayoutManager
         recycler = findViewById(R.id.rv_habit)
-        recycler.setHasFixedSize(true)
-        recycler.layoutManager = StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
+        recycler.layoutManager =
+            StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
+
         initAction()
 
         val factory = ViewModelFactory.getInstance(this)
         viewModel = ViewModelProvider(this, factory)[HabitListViewModel::class.java]
 
         //TODO 7 : Submit pagedList to adapter and add intent to detail
-        viewModel.habits.observe(this){
-            adapterHabit.notifyDataSetChanged()
-            adapterHabit.submitList(it)
-            recycler.adapter = adapterHabit
+        habitAdapter = HabitAdapter { habit: Habit ->
+            val intent = Intent(baseContext, DetailHabitActivity::class.java)
+            intent.putExtra(HABIT_ID, habit.id)
+            startActivity(intent)
+        }
+        recycler.adapter = habitAdapter
+        viewModel.habits.observe(this) {
+            habitAdapter.submitList(it)
         }
     }
 
@@ -124,25 +120,6 @@ class HabitListActivity : AppCompatActivity() {
         }
     }
 
-    private fun showSortingPopUpMenu() {
-        val view = findViewById<View>(R.id.action_sort) ?: return
-        PopupMenu(this, view).run {
-            menuInflater.inflate(R.menu.sort_habits, menu)
-
-            setOnMenuItemClickListener {
-                viewModel.sort(
-                    when (it.itemId) {
-                        R.id.minutes_focus -> HabitSortType.MINUTES_FOCUS
-                        R.id.title_name -> HabitSortType.TITLE_NAME
-                        else -> HabitSortType.START_TIME
-                    }
-                )
-                true
-            }
-            show()
-        }
-    }
-
     private fun initAction() {
         val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.Callback() {
             override fun getMovementFlags(
@@ -163,6 +140,9 @@ class HabitListActivity : AppCompatActivity() {
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val habit = (viewHolder as HabitAdapter.HabitViewHolder).getHabit
                 viewModel.deleteHabit(habit)
+                viewModel.snackbarText.observe(this@HabitListActivity) {
+                    showSnackBar(it)
+                }
             }
 
         })
