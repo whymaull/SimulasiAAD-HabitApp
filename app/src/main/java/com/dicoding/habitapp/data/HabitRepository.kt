@@ -13,8 +13,6 @@ import java.util.concurrent.Executors
 class HabitRepository(private val habitDao: HabitDao, private val executor: ExecutorService) {
 
     companion object {
-        const val PAGE_SIZE = 30
-        const val PLACEHOLDER = true
 
         @Volatile
         private var instance: HabitRepository? = null
@@ -38,22 +36,17 @@ class HabitRepository(private val habitDao: HabitDao, private val executor: Exec
     fun getHabits(sortType: HabitSortType): LiveData<PagedList<Habit>> {
         val sortable = SortUtils.getSortedQuery(sortType)
         val config = PagedList.Config.Builder()
-            .setEnablePlaceholders(PLACEHOLDER)
-            .setInitialLoadSizeHint(4)
-            .setPageSize(PAGE_SIZE)
+            .setEnablePlaceholders(false)
+            .setPageSize(20)
             .build()
         return LivePagedListBuilder(habitDao.getHabits(sortable),config).build()
     }
 
     //TODO 5 : Complete other function inside repository
-    fun getHabitById(habitId: Int): LiveData<Habit> {
-        return habitDao.getHabitById(habitId)
-    }
+    fun getHabitById(habitId: Int): LiveData<Habit> = habitDao.getHabitById(habitId)
 
-    fun insertHabit(newHabit: Habit) : Long {
-        val data = Callable{habitDao.insertHabit(newHabit)}
-        val executor = executor.submit(data)
-        return executor.get()
+    fun insertHabit(newHabit: Habit) = executor.execute {
+        habitDao.insertHabit(newHabit)
     }
 
     fun deleteHabit(habit: Habit) {
@@ -62,7 +55,5 @@ class HabitRepository(private val habitDao: HabitDao, private val executor: Exec
         }
     }
 
-    fun getRandomHabitByPriorityLevel(level: String): LiveData<Habit> {
-        return habitDao.getRandomHabitByPriorityLevel(level)
-    }
+    fun getRandomHabitByPriorityLevel(level: String): LiveData<Habit> = habitDao.getRandomHabitByPriorityLevel((level))
 }

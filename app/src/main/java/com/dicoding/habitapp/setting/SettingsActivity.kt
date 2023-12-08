@@ -49,20 +49,18 @@ class SettingsActivity : AppCompatActivity() {
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey)
 
-            //TODO 11 : Update theme based on value in ListPreference
-            setThemePreference()
-        }
-
-        private fun setThemePreference() {
-                val prefTheme = findPreference<ListPreference>(getString(R.string.pref_key_dark))
-                prefTheme?.setOnPreferenceChangeListener { _, newValue ->
-                    when(newValue){
-                        "auto" -> updateTheme(DarkMode.FOLLOW_SYSTEM.value)
-                        "on"   -> updateTheme(DarkMode.ON.value)
-                        "off"  -> updateTheme(DarkMode.OFF.value)
-                    }
-                    true
-                }
+            // TODO 11 : Update theme based on value in ListPreference
+            val switchDarkMode: ListPreference? = findPreference(getString(R.string.pref_key_dark))
+            switchDarkMode?.setOnPreferenceChangeListener { _, newValue ->
+                val stringValue = newValue.toString()
+                if (stringValue == getString(R.string.pref_dark_follow_system)) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                        updateTheme(DarkMode.FOLLOW_SYSTEM.value)
+                    else updateTheme(DarkMode.ON.value)
+                } else if (stringValue == getString(R.string.pref_dark_off)) updateTheme(DarkMode.OFF.value)
+                else updateTheme(DarkMode.ON.value)
+                true
+            }
         }
 
         private fun updateTheme(mode: Int): Boolean {

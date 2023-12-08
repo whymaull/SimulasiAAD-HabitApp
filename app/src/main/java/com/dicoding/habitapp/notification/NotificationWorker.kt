@@ -22,73 +22,53 @@ import com.dicoding.habitapp.utils.HABIT_TITLE
 import com.dicoding.habitapp.utils.NOTIFICATION_CHANNEL_ID
 import com.dicoding.habitapp.utils.NOTIFICATION_CHANNEL_ID_NUMBER
 
-class NotificationWorker(private val ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
+class NotificationWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
 
     private val habitId = inputData.getInt(HABIT_ID, 0)
     private val habitTitle = inputData.getString(HABIT_TITLE)
 
     override fun doWork(): Result {
-        val prefManager = androidx.preference.PreferenceManager.getDefaultSharedPreferences(applicationContext)
-        val shouldNotify = prefManager.getBoolean(applicationContext.getString(R.string.pref_key_notify), false)
+        val prefManager =
+            androidx.preference.PreferenceManager.getDefaultSharedPreferences(applicationContext)
+        val shouldNotify =
+            prefManager.getBoolean(applicationContext.getString(R.string.pref_key_notify), false)
 
         //TODO 12 : If notification preference on, show notification with pending intent
-        if (shouldNotify){
-            showAlarmNotification(context = ctx)
+        if (shouldNotify) {
+            if (habitTitle != null) {
+                val intent = Intent(applicationContext, DetailHabitActivity::class.java)
+                intent.putExtra(HABIT_ID, habitId)
+                val pendingIntent = TaskStackBuilder.create(applicationContext).run {
+                    addNextIntentWithParentStack(intent)
+                    getPendingIntent(0, PendingIntent.FLAG_IMMUTABLE)
+                }
+                val notificationManagerCompat = applicationContext
+                    .getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                val builder =
+                    NotificationCompat.Builder(applicationContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.ic_notifications)
+                        .setContentTitle(habitTitle)
+                        .setContentText(applicationContext.getString(R.string.notify_content))
+                        .setAutoCancel(true)
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                        .setContentIntent(pendingIntent)
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val channel = NotificationChannel(
+                        NOTIFICATION_CHANNEL_ID,
+                        "channelName",
+                        NotificationManager.IMPORTANCE_DEFAULT
+                    )
+                    builder.setChannelId(NOTIFICATION_CHANNEL_ID)
+                    notificationManagerCompat.createNotificationChannel(channel)
+                }
+
+                val notification = builder.build()
+                notificationManagerCompat.notify(100, notification)
+            }
         }
         return Result.success()
     }
-
-    private fun showAlarmNotification(context: Context) {
-        val title = habitTitle
-        val message = context.getString(R.string.notify_content)
-        val notificationIntent = Intent(context, HabitListActivity::class.java)
-
-        val taskStackBuilder : TaskStackBuilder = TaskStackBuilder.create(context)
-        taskStackBuilder.addParentStack(CountDownActivity::class.java)
-        taskStackBuilder.addNextIntent(notificationIntent)
-
-        val pendingIntent : PendingIntent? = getPendingIntent(habitId)
-        val notificationManagerCompat = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-
-        val builder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_notifications)
-            .setContentTitle(title)
-            .setContentText(message)
-            .setColor(ContextCompat.getColor(context, android.R.color.transparent))
-            .setVibrate(longArrayOf(1000, 1000, 1000, 1000, 1000))
-            .setSound(alarmSound)
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                NOTIFICATION_CHANNEL_ID,
-                "notify-habit",
-                NotificationManager.IMPORTANCE_DEFAULT)
-
-            channel.enableVibration(true)
-            channel.vibrationPattern = longArrayOf(1000, 1000, 1000, 1000, 1000)
-            builder.setChannelId(NOTIFICATION_CHANNEL_ID)
-            notificationManagerCompat.createNotificationChannel(channel)
-        }
-
-        builder.setAutoCancel(true)
-        val notification = builder.build()
-        notification.flags = Notification.FLAG_AUTO_CANCEL or Notification.FLAG_ONGOING_EVENT
-        notificationManagerCompat.notify(NOTIFICATION_CHANNEL_ID_NUMBER, notification)
-    }
-
-    private fun getPendingIntent(habitId: Int): PendingIntent? {
-        val intent = Intent(applicationContext, DetailHabitActivity::class.java).apply {
-            putExtra(HABIT_ID,habitId)
-        }
-        return TaskStackBuilder.create(applicationContext).run {
-            addNextIntentWithParentStack(intent)
-            getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)
-        }
-    }
-
 }
+
+

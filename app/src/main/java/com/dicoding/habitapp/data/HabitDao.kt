@@ -9,7 +9,6 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.RawQuery
 import androidx.sqlite.db.SupportSQLiteQuery
-import com.dicoding.habitapp.utils.TABLE_NAME
 
 //TODO 2 : Define data access object (DAO)
 @Dao
@@ -18,7 +17,7 @@ interface HabitDao {
     @RawQuery(observedEntities = [Habit::class])
     fun getHabits(query: SupportSQLiteQuery): DataSource.Factory<Int, Habit>
 
-    @Query("select * from $TABLE_NAME where id=:habitId")
+    @Query("select * from habits where id=:habitId")
     fun getHabitById(habitId: Int): LiveData<Habit>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -30,6 +29,6 @@ interface HabitDao {
     @Delete
     fun deleteHabit(habits: Habit)
 
-    @Query("SELECT * FROM HABITS WHERE priorityLevel = :level  ORDER BY RANDOM() LIMIT 1")
+    @Query("SELECT * FROM habits WHERE priorityLevel = :level  ORDER BY RANDOM() LIMIT 1")
     fun getRandomHabitByPriorityLevel(level: String): LiveData<Habit>
 }
