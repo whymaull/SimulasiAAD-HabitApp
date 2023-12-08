@@ -1,26 +1,20 @@
 package com.dicoding.habitapp.notification
 
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.TaskStackBuilder
 import android.content.Context
 import android.content.Intent
-import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.dicoding.habitapp.R
-import com.dicoding.habitapp.ui.countdown.CountDownActivity
 import com.dicoding.habitapp.ui.detail.DetailHabitActivity
-import com.dicoding.habitapp.ui.list.HabitListActivity
 import com.dicoding.habitapp.utils.HABIT_ID
 import com.dicoding.habitapp.utils.HABIT_TITLE
 import com.dicoding.habitapp.utils.NOTIFICATION_CHANNEL_ID
-import com.dicoding.habitapp.utils.NOTIFICATION_CHANNEL_ID_NUMBER
 
 class NotificationWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
 
